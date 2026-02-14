@@ -1,0 +1,81 @@
+---
+// スクラップの完了を示すカードコンポーネント
+---
+
+<div class="scrap-closed">
+  <div class="closed-card">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+    <div class="content">
+      <span class="title">このスクラップは完了しました</span>
+      <span class="description">このスレッドへの追記は終了しています</span>
+    </div>
+  </div>
+</div>
+
+<style>
+.scrap-closed {
+  margin-top: 0;
+  margin-bottom: 32px;
+  position: relative;
+  padding-left: 24px;
+}
+
+.scrap-closed::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: -24px;
+  bottom: 0;
+  width: 3px;
+  background: var(--border);
+}
+
+.scrap-closed::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+}
+
+.closed-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+}
+
+.closed-card .icon {
+  width: 32px;
+  height: 32px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.closed-card .content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.closed-card .title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.closed-card .description {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+</style>

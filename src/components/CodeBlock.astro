@@ -1,0 +1,236 @@
+---
+interface Props {
+  lang?: string;
+  copyMode?: 'button' | 'block';
+}
+
+const { lang = "", copyMode = "button" } = Astro.props as Props;
+const languageLabel = lang || "text";
+const showLabel = Boolean(lang);
+const isBlockCopy = copyMode === "block";
+---
+
+<figure class={`code-block${isBlockCopy ? " is-block-copy" : ""}`} data-lang={showLabel ? languageLabel : undefined}>
+  {isBlockCopy && (
+    <span
+      class="copy-label"
+      data-default-label="クリックでコピー"
+      data-success-label="コピーしました！"
+      aria-live="polite"
+    >
+      クリックでコピー
+    </span>
+  )}
+  <pre
+    class={`language-${languageLabel}`}
+    data-copy-trigger={isBlockCopy ? "" : undefined}
+    tabindex={isBlockCopy ? "0" : undefined}
+    role={isBlockCopy ? "button" : undefined}
+    aria-label={isBlockCopy ? "コードをコピー" : undefined}
+  ><code class={`language-${languageLabel}`}><slot /></code></pre>
+  {!isBlockCopy && (
+    <button
+      class="copy-button"
+      type="button"
+      aria-label="コードをコピー"
+      title="コードをコピー"
+      data-copy-trigger
+    ></button>
+  )}
+</figure>
+
+<script>
+  const $blocks = document.querySelectorAll(".code-block");
+
+  $blocks.forEach(($block) => {
+    const $trigger = $block.querySelector("[data-copy-trigger]");
+    const $pre = $block.querySelector("pre");
+    const $label = $block.querySelector(".copy-label");
+
+    if (!$trigger || !$pre) return;
+
+    const defaultLabel = $label?.dataset.defaultLabel ?? "";
+    const successLabel = $label?.dataset.successLabel ?? "";
+
+    const resetLabel = () => {
+      if (!$label) return;
+      $label.textContent = defaultLabel;
+      $label.classList.remove("copied");
+    };
+
+    resetLabel();
+
+    const markCopied = () => {
+      $block.classList.add("copied");
+      $trigger.classList.add("copied");
+      if ($label) {
+        $label.textContent = successLabel || defaultLabel;
+        $label.classList.add("copied");
+      }
+      setTimeout(() => {
+        $block.classList.remove("copied");
+        $trigger.classList.remove("copied");
+        resetLabel();
+      }, 2000);
+    };
+
+    const copyToClipboard = async () => {
+      const text = $pre.innerText.trim();
+      if (!text) return;
+
+      try {
+        await navigator.clipboard.writeText(text);
+        markCopied();
+      } catch (error) {
+        console.error("Failed to copy code block", error);
+        resetLabel();
+      }
+    };
+
+    $trigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      copyToClipboard();
+    });
+
+    if ($trigger.tagName !== "BUTTON") {
+      $trigger.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+          event.preventDefault();
+          copyToClipboard();
+        }
+      });
+    }
+  });
+</script>
+
+<style>
+  .code-block {
+    position: relative;
+    margin: 0;
+  }
+
+  .code-block[data-lang]::before {
+    content: attr(data-lang);
+    position: absolute;
+    top: 12px;
+    left: 18px;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-code-label);
+    pointer-events: none;
+  }
+
+  .code-block pre {
+    position: relative;
+    background: var(--bg-code, #f8fafc);
+    color: var(--text-code, #1f2937);
+    border-radius: var(--radius-md, 12px);
+    padding: 18px 20px;
+    padding-right: 48px;
+    overflow-x: auto;
+    border: 1px solid var(--border-code, rgba(148, 163, 184, 0.6));
+    margin: 0;
+  }
+
+  .code-block.is-block-copy pre {
+    padding: 18px 20px 30px;
+  }
+
+  .code-block pre code {
+    font-family: "Fira Code", "Source Code Pro", monospace;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    background: transparent;
+    white-space: pre;
+  }
+
+  .copy-button {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: var(--copy-btn-bg);
+    color: var(--accent);
+    border: 1px solid var(--copy-btn-border);
+    border-radius: 50%;
+    padding: 0;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .copy-button::before {
+    content: "⧉";
+    line-height: 1;
+    color: currentColor;
+  }
+
+  .copy-button:hover {
+    background: var(--copy-btn-hover-bg);
+    border-color: var(--copy-btn-hover-border);
+    transform: translateY(-1px);
+  }
+
+  .copy-button.copied {
+    background: var(--copy-btn-copied-bg);
+    color: #fff;
+    border-color: var(--copy-btn-copied-bg);
+  }
+
+  .copy-button.copied::before {
+    content: "✓";
+    font-weight: 600;
+  }
+
+  .copy-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .code-block.is-block-copy {
+    cursor: pointer;
+  }
+
+  .code-block.is-block-copy .copy-label {
+    position: absolute;
+    right: 18px;
+    bottom: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--accent);
+    opacity: 0.75;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    pointer-events: none;
+    transition: color 0.2s ease, opacity 0.2s ease;
+    z-index: 1;
+  }
+
+  .code-block.is-block-copy .copy-label::after {
+    content: "⧉";
+    font-size: 0.75rem;
+    opacity: 0.85;
+  }
+
+  .code-block.is-block-copy.copied .copy-label {
+    color: var(--accent);
+    opacity: 1;
+  }
+
+  .code-block.is-block-copy pre:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+
+  .code-block.is-block-copy.copied pre {
+    box-shadow: inset 0 0 0 2px var(--copy-btn-hover-border);
+  }
+</style>

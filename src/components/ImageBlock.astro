@@ -1,0 +1,199 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import { resolveImage } from '../utils/images';
+
+interface Props {
+  src: ImageMetadata | string;
+  alt: string;
+  caption?: string;
+}
+
+const { src, alt, caption } = Astro.props;
+
+const { resolvedSrc, isRemote } = await resolveImage(src);
+---
+<figure class="image-block">
+  <button type="button" class="image-trigger" aria-label="画像を拡大表示">
+    {isRemote ? (
+      <Image src={resolvedSrc as string} alt={alt} inferSize />
+    ) : (
+      <Image src={resolvedSrc as ImageMetadata} alt={alt} />
+    )}
+  </button>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<dialog class="image-modal">
+  <div class="modal-content">
+    <button type="button" class="modal-close" aria-label="閉じる">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+    {isRemote ? (
+      <Image src={resolvedSrc as string} alt={alt} inferSize />
+    ) : (
+      <Image src={resolvedSrc as ImageMetadata} alt={alt} />
+    )}
+    {caption && <p class="modal-caption">{caption}</p>}
+  </div>
+</dialog>
+
+<script>
+  const lockScroll = () => {
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+  };
+
+  const unlockScroll = () => {
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+  };
+
+  document.querySelectorAll('.image-block').forEach((block) => {
+    const trigger = block.querySelector('.image-trigger');
+    const dialog = block.nextElementSibling as HTMLDialogElement;
+
+    if (!trigger || !dialog?.classList.contains('image-modal')) return;
+
+    const closeBtn = dialog.querySelector('.modal-close');
+
+    trigger.addEventListener('click', () => {
+      lockScroll();
+      dialog.showModal();
+    });
+
+    const handleClose = () => {
+      unlockScroll();
+      dialog.close();
+    };
+
+    closeBtn?.addEventListener('click', handleClose);
+
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) {
+        handleClose();
+      }
+    });
+
+    dialog.addEventListener('close', unlockScroll);
+  });
+</script>
+
+<style>
+  .image-block {
+    margin: 24px 0;
+  }
+
+  .image-trigger {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: zoom-in;
+    border-radius: var(--radius-md, 12px);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .image-trigger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px var(--shadow-hover);
+  }
+
+  .image-trigger img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md, 12px);
+  }
+
+  figcaption {
+    margin-top: 12px;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-secondary, #4c566a);
+    line-height: 1.6;
+  }
+
+  /* Dialog styles */
+  .image-modal {
+    max-width: 90vw;
+    max-height: 90vh;
+    padding: 0;
+    border: none;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .image-modal::backdrop {
+    background: var(--bg-overlay);
+    cursor: zoom-out;
+  }
+
+  .modal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .modal-content img {
+    max-width: 90vw;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: var(--radius-md, 12px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: -48px;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+  }
+
+  .modal-caption {
+    margin-top: 16px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    text-align: center;
+    max-width: 600px;
+  }
+
+  @media (max-width: 600px) {
+    .modal-close {
+      top: -44px;
+      width: 36px;
+      height: 36px;
+    }
+
+    .modal-close svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .modal-content img {
+      max-height: 80vh;
+    }
+  }
+</style>

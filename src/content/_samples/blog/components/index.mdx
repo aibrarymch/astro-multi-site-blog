@@ -1,0 +1,160 @@
+---
+title: "コンポーネント"
+category: "パーツ"
+tags:
+  - Astro
+  - リファレンス
+publishedAt: 2026-05-20
+updatedAt: 2026-05-22
+excerpt: "本サイトで使用しているパーツリスト"
+thumbnail: "./img/hoge.png"
+draft: false
+---
+
+import LinkCard from '../../../../components/LinkCard.astro';
+import WorkCard from '../../../../components/WorkCard.astro';
+import CodeBlock from '../../../../components/CodeBlock.astro';
+import QuoteBlock from '../../../../components/QuoteBlock.astro';
+import Accordion from '../../../../components/Accordion.astro';
+import ImageBlock from '../../../../components/ImageBlock.astro';
+import Callout from '../../../../components/Callout.astro';
+
+## 基本要素   
+
+### 見出し
+#### 見出し
+##### 見出し
+
+本文これは本文きっと本文。あれも本文。あれは本文？本文これは本文きっと本文。あれも本文。あれは本文？本文これは本文きっと本文。あれも本文。あれは本文？本文これは本文きっと本文。あれも本文。あれは本文？本文これは本文きっと本文。あれも本文。
+
+本文これは本文きっと本文。あれも本文。あれは本文？本文これは本文きっと本文。あれも本文。あれは本文？本文これは本文きっと本文。あれも本文。あれは本文？本文これは本文きっと本文。あれも本文。あれは本文？本文これは本文きっと本文。あれも本文。
+
+### 注意書き・補足
+
+<Callout type="note">
+  これは補足情報です。追加の説明や背景情報を提供する際に使用します。
+</Callout>
+
+<Callout type="tip">
+  これはヒントです。便利なテクニックやおすすめの方法を紹介する際に使用します。
+</Callout>
+
+<Callout type="warning">
+  これは注意です。気をつけるべきポイントや注意事項を伝える際に使用します。
+</Callout>
+
+<Callout type="caution">
+  これは警告です。重大な問題や危険な操作について警告する際に使用します。
+</Callout>
+
+<Callout type="note" title="カスタムタイトル">
+  `title`プロパティでタイトルをカスタマイズできます。
+</Callout>
+
+### リンク
+
+[外部リンク](https://qiita.com/makotosaekit/items/9c53cf233f5a835b498f)
+
+[内部リンク](/)
+
+
+### リスト
+- リスト
+  - リスト
+- リスト
+- リスト
+
+### インラインコード
+
+あいう`<p>コードブロックのコード</p>`えおか
+
+### 横線
+
+---
+
+## コードブロック
+
+
+<CodeBlock lang="bash" copyMode="button">mkdir astro-blog
+cd astro-blog
+npm install
+npm run dev</CodeBlock>
+
+全体クリック可能モード
+
+<CodeBlock lang="bash" copyMode="block">あいうえお
+かきくけこ
+さしすせそ</CodeBlock>
+
+## リンクカード
+
+<LinkCard url="https://qiita.com/makotosaekit/items/9c53cf233f5a835b498f" imageFit="contain" />
+
+## 作品カード
+
+<WorkCard
+  title="サンプル作品タイトル"
+  thumbnail="./img/hoge.png"
+  description="作品の概要や説明文をここに記載します。複数行にわたる説明も可能です。"
+  links={[
+    { label: "デモを見る", url: "https://example.com", icon: "play" },
+    { label: "GitHub", url: "https://github.com", icon: "github" },
+    { label: "ダウンロード", url: "https://example.com/download", icon: "download" }
+  ]}
+/>
+
+概要なしの場合：
+
+<WorkCard
+  title="シンプルな作品カード"
+  thumbnail="./img/hoge.png"
+  links={[
+    { label: "外部リンク", url: "https://example.com" }
+  ]}
+  imageFit="contain"
+/>
+
+## 引用カード
+
+<QuoteBlock source="Astro公式ドキュメント" sourceUrl="https://docs.astro.build/">
+  Astroは高速なWebサイトを構築するためのフロントエンドフレームワークです。コンテンツ重視のプロジェクトに最適化されたDXを提供します。
+</QuoteBlock>
+
+## テーブル
+
+{/* テーブル表示テスト */}
+
+| ヘッダー | ヘッダー | ヘッダー |
+| -------- | -------- | -------- |
+| セル     | セル     | セル     |
+| セル     | セル     | セル     |
+
+{/* テーブル内にHTML要素をいれる */}
+{/* table要素は横スクロールに対応させるため自動的に `.table-wrapper` で囲まれる。 */}
+
+| ヘッダー | ヘッダー | ヘッダー |
+| -------- | -------- | -------- |
+| <a href="https://www.google.com">リンク</a> | セル     | セル     |
+| セル     | セル     | <CodeBlock lang="bash" copyMode="block">これはテストです。これはテストです。これはテストです。これはテストです。これはテストです。これはテストです。これはテストです。</CodeBlock> |
+
+## アコーディオン
+
+<Accordion title="クリックして開く">
+  アコーディオンの中身です。テキストや他のコンポーネントを含めることができます。
+
+  - リスト項目1
+  - リスト項目2
+  - リスト項目3
+</Accordion>
+
+<Accordion title="デフォルトで開いた状態" open>
+  `open`プロパティを指定すると、デフォルトで開いた状態になります。
+</Accordion>
+
+## 画像ブロック
+
+<ImageBlock
+  src="./img/hoge.png"
+  alt="サンプル画像"
+  caption="クリックすると拡大表示されます"
+/>

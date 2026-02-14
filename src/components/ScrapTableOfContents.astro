@@ -1,0 +1,245 @@
+---
+// スクラップのエントリ日時を目次として表示するコンポーネント
+// クライアントサイドで.scrap-entry要素から日時を取得して表示
+---
+
+<nav class="scrap-toc card" data-scrap-toc-root>
+  <div class="toc-header">
+    <span>更新履歴</span>
+  </div>
+  <ol class="toc-list"></ol>
+</nav>
+
+<script>
+  (() => {
+    if (typeof window === 'undefined') return;
+
+    const globalKey = '__astroScrapTocSetup__';
+    if (window[globalKey]) return;
+    window[globalKey] = true;
+
+    const initialized = new WeakSet();
+
+    const initScrapToc = (root) => {
+      if (initialized.has(root)) return;
+      initialized.add(root);
+
+      const list = root.querySelector('.toc-list');
+      if (!list) return;
+
+      // .scrap-entry要素を取得（datetime または title を持つもの）
+      const entries = Array.from(document.querySelectorAll('.scrap-entry'));
+      const validEntries = entries.filter((e) => e.dataset.datetime || e.dataset.title);
+      if (!validEntries.length) {
+        root.style.display = 'none';
+        return;
+      }
+
+      // リストを生成
+      validEntries.forEach((entry) => {
+        const title = entry.dataset.title;
+        const datetime = entry.dataset.datetime;
+        const id = entry.id;
+        if (!id) return;
+
+        let label;
+        if (title) {
+          label = title;
+        } else if (datetime) {
+          const date = new Date(datetime);
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, '0');
+          const d = String(date.getDate()).padStart(2, '0');
+          const h = String(date.getHours()).padStart(2, '0');
+          const min = String(date.getMinutes()).padStart(2, '0');
+          label = `${y}/${m}/${d} ${h}:${min}`;
+        } else {
+          return;
+        }
+
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = `#${id}`;
+        a.textContent = label;
+        a.dataset.tocId = id;
+        li.appendChild(a);
+        list.appendChild(li);
+      });
+
+      const links = Array.from(list.querySelectorAll('a[data-toc-id]'));
+      let activeId = null;
+
+      const getHeaderOffset = () => {
+        const header = document.querySelector('header.site-header');
+        return (header ? header.offsetHeight : 0) + 16;
+      };
+
+      const scrollToEntry = (entry, behavior = 'smooth') => {
+        const offset = getHeaderOffset();
+        const targetTop = entry.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top: Math.max(targetTop, 0), behavior });
+      };
+
+      const setActive = (id) => {
+        if (!id || id === activeId) return;
+        activeId = id;
+
+        links.forEach((link) => {
+          const isActive = link.dataset.tocId === id;
+          link.classList.toggle('is-active', isActive);
+          const parent = link.closest('li');
+          if (parent) {
+            parent.classList.toggle('is-active', isActive);
+          }
+        });
+      };
+
+      const updateActive = () => {
+        const viewportOffset = window.scrollY + getHeaderOffset() + 40;
+        let current = entries[0] || null;
+
+        for (const entry of entries) {
+          const top = entry.getBoundingClientRect().top + window.scrollY;
+          if (top <= viewportOffset) {
+            current = entry;
+          } else {
+            break;
+          }
+        }
+
+        if (current) {
+          setActive(current.id);
+        }
+      };
+
+      let ticking = false;
+      const handleScroll = () => {
+        if (ticking) return;
+        ticking = true;
+        window.requestAnimationFrame(() => {
+          ticking = false;
+          updateActive();
+        });
+      };
+
+      const controller = new AbortController();
+      const { signal } = controller;
+
+      window.addEventListener('scroll', handleScroll, { passive: true, signal });
+      window.addEventListener('resize', handleScroll, { passive: true, signal });
+
+      links.forEach((link) => {
+        link.addEventListener(
+          'click',
+          (event) => {
+            const id = link.dataset.tocId;
+            if (!id) return;
+            event.preventDefault();
+            const entry = document.getElementById(id);
+            if (!entry) return;
+            scrollToEntry(entry);
+            setActive(id);
+            if (history && history.replaceState) {
+              history.replaceState(null, '', `#${id}`);
+            } else {
+              location.hash = id;
+            }
+          },
+          { signal }
+        );
+      });
+
+      const observer = new MutationObserver(() => {
+        if (!document.contains(root)) {
+          controller.abort();
+          observer.disconnect();
+        }
+      });
+
+      observer.observe(document.body, { childList: true, subtree: true });
+
+      updateActive();
+    };
+
+    const setup = () => {
+      document.querySelectorAll('[data-scrap-toc-root]').forEach(initScrapToc);
+    };
+
+    setup();
+    document.addEventListener('astro:page-load', setup);
+    document.addEventListener('astro:after-swap', setup);
+  })();
+</script>
+
+<style>
+.scrap-toc {
+  padding: 20px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.toc-header {
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.toc-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.toc-list :global(li) {
+  position: relative;
+  padding-left: 14px;
+  line-height: 1.5;
+}
+
+.toc-list :global(li)::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+  transform: translateY(-50%) scale(0.8);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.toc-list :global(li.is-active)::before {
+  background: var(--accent);
+  transform: translateY(-50%) scale(1);
+}
+
+.toc-list :global(li a) {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.toc-list :global(li.is-active > a) {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.toc-list :global(li a:hover) {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .scrap-toc {
+    display: none;
+  }
+}
+</style>

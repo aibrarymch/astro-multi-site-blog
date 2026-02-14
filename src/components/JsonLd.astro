@@ -1,0 +1,112 @@
+---
+/**
+ * JSON-LD構造化データコンポーネント
+ * SEO向けにSchema.orgの構造化データを出力
+ */
+import { SITE_NAME, SITE_DESCRIPTION, SITE_URL, AUTHOR_PROFILE, getAuthorSameAs } from '../utils/siteConfig';
+import { slugify } from '../utils/slugify';
+
+interface Props {
+  /** 記事ページの場合の記事データ */
+  article?: {
+    title: string;
+    description: string;
+    publishedAt: Date;
+    updatedAt: Date;
+    thumbnail?: string;
+    slug: string;
+    category: string;
+  };
+}
+
+const { article } = Astro.props;
+
+// 筆者のJSON-LD (Person schema)
+const authorJsonLd = {
+  '@type': 'Person',
+  name: AUTHOR_PROFILE.name,
+  description: AUTHOR_PROFILE.description,
+  url: AUTHOR_PROFILE.url,
+  image: AUTHOR_PROFILE.avatar.startsWith('http')
+    ? AUTHOR_PROFILE.avatar
+    : new URL(AUTHOR_PROFILE.avatar, SITE_URL).href,
+  sameAs: getAuthorSameAs(),
+};
+
+// WebSiteスキーマ（トップページ用）
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE_NAME,
+  description: SITE_DESCRIPTION,
+  url: SITE_URL,
+  author: authorJsonLd,
+  publisher: {
+    '@type': 'Person',
+    name: AUTHOR_PROFILE.name,
+    url: AUTHOR_PROFILE.url,
+  },
+};
+
+// 記事スキーマ（記事ページ用）
+const articleJsonLd = article ? {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: article.title,
+  description: article.description,
+  image: article.thumbnail
+    ? (article.thumbnail.startsWith('http')
+        ? article.thumbnail
+        : new URL(article.thumbnail, SITE_URL).href)
+    : new URL('/images/ogp.png', SITE_URL).href,
+  datePublished: article.publishedAt.toISOString(),
+  dateModified: article.updatedAt.toISOString(),
+  url: new URL(`/posts/${article.slug}/`, SITE_URL).href,
+  author: authorJsonLd,
+  publisher: {
+    '@type': 'Person',
+    name: AUTHOR_PROFILE.name,
+    url: AUTHOR_PROFILE.url,
+  },
+  mainEntityOfPage: {
+    '@type': 'WebPage',
+    '@id': new URL(`/posts/${article.slug}/`, SITE_URL).href,
+  },
+  inLanguage: 'ja',
+} : null;
+
+// パンくずリストスキーマ（記事ページ用）
+const breadcrumbJsonLd = article ? {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'ホーム',
+      item: SITE_URL,
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: article.category,
+      item: `${SITE_URL}/categories/${slugify(article.category)}/`,
+    },
+    {
+      '@type': 'ListItem',
+      position: 3,
+      name: article.title,
+      item: new URL(`/posts/${article.slug}/`, SITE_URL).href,
+    },
+  ],
+} : null;
+
+// 出力するJSON-LD（記事ページの場合はArticle + Breadcrumb、それ以外はWebSite）
+const jsonLdArray = article 
+  ? [articleJsonLd, breadcrumbJsonLd] 
+  : [websiteJsonLd];
+---
+
+{jsonLdArray.map((jsonLd) => (
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+))}

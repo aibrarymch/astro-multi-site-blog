@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+  <!-- 髪のような流線 -->
+  <path
+    d="M20,80 
+       C30,60 50,60 65,45"
+    fill="none"
+    stroke="#333"
+    stroke-width="4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <!-- 羽ペンの軸 -->
+  <path
+    d="M25,75 
+       Q50,25 75,30"
+    fill="none"
+    stroke="#333"
+    stroke-width="4"
+    stroke-linecap="round"
+  />
+  <style>
+    path { stroke: #333; }
+    @media (prefers-color-scheme: dark) {
+      path { stroke: #FFFFFF; }
+    }
+  </style>
+</svg>

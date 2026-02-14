@@ -1,0 +1,151 @@
+---
+import '../styles/global.css';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import JsonLd from '../components/JsonLd.astro';
+import { getCanonicalUrl, SITE_NAME, SITE_DESCRIPTION, SITE_URL, FOOTER_LINKS, SITE_CONFIG, getSiteUrl, shouldGenerateListingPages, AUTHOR_PROFILE } from '../utils/siteConfig';
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  ogType?: string;
+  canonicalUrl?: string;
+  /** 記事ページの場合、その記事のageRestricted設定 */
+  ageRestricted?: boolean;
+  /** JSON-LD用の記事データ（記事ページの場合） */
+  article?: {
+    title: string;
+    description: string;
+    publishedAt: Date;
+    updatedAt: Date;
+    thumbnail?: string;
+    slug: string;
+    category: string;
+  };
+}
+
+const {
+  title = SITE_NAME,
+  description = SITE_DESCRIPTION,
+  ogImage = '/images/ogp.png',
+  ogType = 'website',
+  canonicalUrl,
+  ageRestricted,
+  article
+} = Astro.props;
+
+const siteUrl = SITE_URL;
+const ogImageUrl = new URL(ogImage, siteUrl).href;
+const hasSidebar = Astro.slots.has('sidebar');
+const isProduction = import.meta.env.PROD;
+
+// SEO: canonical URL計算（nullの場合はタグ出力しない）
+const computedCanonicalUrl = canonicalUrl || getCanonicalUrl(Astro.url.pathname, ageRestricted);
+const pageUrl = computedCanonicalUrl || Astro.url.href;
+
+// ALLサイト以外はヘッダーのTOPリンクをALLサイトに向ける
+const isAllSite = shouldGenerateListingPages();
+const homeUrl = isAllSite ? '/' : getSiteUrl(SITE_CONFIG['all']);
+---
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <!-- Theme initialization (FOUC prevention) -->
+    <script is:inline>
+      (function() {
+        const stored = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = stored === 'dark' || stored === 'light'
+          ? stored
+          : (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
+
+    {isProduction && (
+      <!-- Google Tag Manager -->
+      <script is:inline>
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-N4ZV4DDD');
+      </script>
+      <!-- End Google Tag Manager -->
+    )}
+
+    <!-- Resource Hints -->
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" />
+    <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet" />
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+
+    <!-- OGP -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={pageUrl} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:locale" content="ja_JP" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <link rel="icon" type="image/svg+xml" href="/images/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title={SITE_NAME} href="/rss.xml" />
+    {computedCanonicalUrl && <link rel="canonical" href={computedCanonicalUrl} />}
+    <meta name="author" content={AUTHOR_PROFILE.name} />
+    <title>{title}</title>
+    <JsonLd article={article} />
+  </head>
+  <body>
+    {isProduction && (
+      <!-- Google Tag Manager (noscript) -->
+      <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N4ZV4DDD"
+      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+      <!-- End Google Tag Manager (noscript) -->
+    )}
+    <header class="site-header">
+      <div class="inner">
+        <div class="header-left"></div>
+        <a href={homeUrl} class="logo"><img src="/images/favicon.svg" alt={SITE_NAME} width="32" height="32" /></a>
+        <nav class="navigation">
+          <ThemeToggle />
+        </nav>
+      </div>
+    </header>
+    <main class="layout">
+      <div class="content-area">
+        <slot />
+      </div>
+      <div class="sidebar-area" aria-label="サイドバー">
+        {hasSidebar ? <slot name="sidebar" /> : null}
+      </div>
+    </main>
+    <footer class="site-footer">
+      <span>© {new Date().getFullYear()} {SITE_NAME}</span>
+      <nav class="footer-links">
+        {FOOTER_LINKS.map((link) => (
+          <a href={link.url} target="_blank" rel="noopener noreferrer" aria-label={link.label}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              {link.iconPaths.map((d) => <path d={d} />)}
+            </svg>
+          </a>
+        ))}
+      </nav>
+    </footer>
+  </body>
+</html>

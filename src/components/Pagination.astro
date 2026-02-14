@@ -1,0 +1,215 @@
+---
+interface Props {
+  currentPage: number;
+  totalPages: number;
+  baseUrl: string;
+}
+
+const { currentPage, totalPages, baseUrl } = Astro.props;
+
+// URLを生成するヘルパー関数
+function getPageUrl(page: number): string {
+  // baseUrlが/で終わっている場合は調整
+  const base = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  // トップページ（baseUrl=/）の1ページ目は / を返す
+  if (page === 1 && baseUrl === '/') {
+    return '/';
+  }
+  return `${base}/${page}/`;
+}
+
+// 表示するページ番号の配列を生成
+function getPageNumbers(): (number | 'ellipsis')[] {
+  const pages: (number | 'ellipsis')[] = [];
+  const showPages = 5; // 表示するページ数
+
+  if (totalPages <= showPages + 2) {
+    // 全ページ表示
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+  } else {
+    // 最初のページ
+    pages.push(1);
+
+    // 現在のページの前後を計算
+    let start = Math.max(2, currentPage - 1);
+    let end = Math.min(totalPages - 1, currentPage + 1);
+
+    // 開始位置を調整
+    if (currentPage <= 3) {
+      start = 2;
+      end = 4;
+    } else if (currentPage >= totalPages - 2) {
+      start = totalPages - 3;
+      end = totalPages - 1;
+    }
+
+    // 省略記号（先頭側）
+    if (start > 2) {
+      pages.push('ellipsis');
+    }
+
+    // 中間のページ
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    // 省略記号（末尾側）
+    if (end < totalPages - 1) {
+      pages.push('ellipsis');
+    }
+
+    // 最後のページ
+    pages.push(totalPages);
+  }
+
+  return pages;
+}
+
+const pageNumbers = getPageNumbers();
+const hasPrev = currentPage > 1;
+const hasNext = currentPage < totalPages;
+---
+
+<nav class="pagination" aria-label="ページナビゲーション">
+  <a
+    href={hasPrev ? getPageUrl(currentPage - 1) : undefined}
+    class:list={['pagination-prev', { disabled: !hasPrev }]}
+    aria-disabled={!hasPrev}
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"></polyline>
+    </svg>
+    <span>前へ</span>
+  </a>
+
+  <ul class="pagination-pages">
+    {pageNumbers.map((pageNum) => (
+      pageNum === 'ellipsis' ? (
+        <li class="pagination-ellipsis">...</li>
+      ) : (
+        <li>
+          <a
+            href={getPageUrl(pageNum)}
+            class:list={['pagination-page', { active: pageNum === currentPage }]}
+            aria-current={pageNum === currentPage ? 'page' : undefined}
+          >
+            {pageNum}
+          </a>
+        </li>
+      )
+    ))}
+  </ul>
+
+  <a
+    href={hasNext ? getPageUrl(currentPage + 1) : undefined}
+    class:list={['pagination-next', { disabled: !hasNext }]}
+    aria-disabled={!hasNext}
+  >
+    <span>次へ</span>
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </a>
+</nav>
+
+<style>
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 48px;
+  padding: 16px 0;
+}
+
+.pagination-prev,
+.pagination-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.pagination-prev:hover:not(.disabled),
+.pagination-next:hover:not(.disabled) {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.pagination-prev.disabled,
+.pagination-next.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pagination-page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.pagination-page:hover:not(.active) {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.pagination-page.active {
+  color: white;
+  background: var(--accent);
+  font-weight: 600;
+}
+
+.pagination-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  .pagination {
+    gap: 4px;
+  }
+
+  .pagination-prev span,
+  .pagination-next span {
+    display: none;
+  }
+
+  .pagination-prev,
+  .pagination-next {
+    padding: 8px;
+  }
+
+  .pagination-page {
+    min-width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+}
+</style>

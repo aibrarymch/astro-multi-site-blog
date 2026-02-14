@@ -1,0 +1,128 @@
+---
+import { AUTHOR_PROFILE } from '../utils/siteConfig';
+
+interface Props {
+  wide?: boolean;
+}
+
+const { wide = false } = Astro.props;
+---
+<aside class:list={["author-profile", "card", { wide }]}>
+  <div class="author-avatar">
+    <img src={AUTHOR_PROFILE.avatar} alt={AUTHOR_PROFILE.name} width="80" height="80" />
+  </div>
+  <div class="author-info">
+    <p class="author-name">
+          <svg class="pencil-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+            <path d="m15 5 4 4"/>
+          </svg>
+          {AUTHOR_PROFILE.name}
+        </p>
+    <nav class="author-links">
+      {AUTHOR_PROFILE.links.map((link) => (
+        <a href={link.url} target="_blank" rel="noopener noreferrer" aria-label={link.label} data-icon-type={link.iconType}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={link.iconType === 'fill' ? 'currentColor' : 'none'} stroke={link.iconType === 'stroke' ? 'currentColor' : 'none'} stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            {link.iconPaths.map((d) => <path d={d} />)}
+          </svg>
+        </a>
+      ))}
+    </nav>
+  </div>
+</aside>
+
+<style>
+.author-profile {
+  padding: 24px;
+  background: var(--bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.author-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.author-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.author-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.author-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pencil-icon {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.author-links {
+  display: flex;
+  gap: 16px;
+}
+
+.author-links a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--text-secondary);
+  border: 2px solid transparent;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.author-links a:hover {
+  color: var(--accent);
+  background: var(--accent-soft-hover);
+  border-color: var(--accent);
+}
+
+
+
+/* 2カラムレイアウト（wide指定時） */
+.author-profile.wide {
+  flex-direction: row;
+  justify-content: center;
+  gap: 24px;
+}
+
+.author-profile.wide .author-info {
+  align-items: flex-start;
+}
+
+/* SP幅では縦並びに戻す */
+@media (max-width: 900px) {
+  .author-profile.wide {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .author-profile.wide .author-info {
+    align-items: center;
+  }
+}
+</style>

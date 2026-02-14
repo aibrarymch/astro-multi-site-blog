@@ -1,0 +1,349 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+const items = headings.filter((heading) => heading.depth >= 2 && heading.depth <= 3);
+---
+{items.length > 0 ? (
+  <nav class="toc card" data-toc-root>
+    <button class="toc-toggle" aria-expanded="false" aria-controls="toc-list">
+      <span>目次</span>
+      <span class="toc-toggle-icon" aria-hidden="true"></span>
+    </button>
+    <ol id="toc-list">
+      {items.map((heading) => (
+        <li class={`depth-${heading.depth}`}>
+          <a href={`#${heading.slug}`} data-toc-slug={heading.slug}>{heading.text}</a>
+        </li>
+      ))}
+    </ol>
+  </nav>
+) : null}
+
+<script>
+  (() => {
+    if (typeof window === 'undefined') return;
+
+    const globalKey = '__astroTocSetup__';
+    if (window[globalKey]) return;
+    window[globalKey] = true;
+
+    const initialized = new WeakSet();
+
+    const initToc = (root) => {
+      if (initialized.has(root)) return;
+      initialized.add(root);
+
+      const links = Array.from(root.querySelectorAll('a[data-toc-slug]'));
+      if (!links.length) return;
+
+      const headings = links
+        .map((link) => document.getElementById(link.dataset.tocSlug ?? ''))
+        .filter((heading) => heading !== null);
+
+      if (!headings.length) return;
+
+      let activeSlug = null;
+
+      const getHeaderOffset = () => {
+        const header = document.querySelector('header.site-header');
+        return (header ? header.offsetHeight : 0) + 16;
+      };
+
+      const scrollToHeading = (heading, behavior = 'smooth') => {
+        const offset = getHeaderOffset();
+        const targetTop = heading.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top: Math.max(targetTop, 0), behavior });
+      };
+
+      const setActive = (slug) => {
+        if (!slug || slug === activeSlug) return;
+        activeSlug = slug;
+
+        links.forEach((link) => {
+          const isActive = link.dataset.tocSlug === slug;
+          link.classList.toggle('is-active', isActive);
+          if (isActive) {
+            link.setAttribute('aria-current', 'true');
+          } else {
+            link.removeAttribute('aria-current');
+          }
+          const parent = link.closest('li');
+          if (parent) {
+            parent.classList.toggle('is-active', isActive);
+          }
+        });
+      };
+
+      const updateActive = () => {
+        const viewportOffset = window.scrollY + getHeaderOffset() + 40;
+        let current = headings[0] || null;
+
+        for (const heading of headings) {
+          const top = heading.getBoundingClientRect().top + window.scrollY;
+          if (top <= viewportOffset) {
+            current = heading;
+          } else {
+            break;
+          }
+        }
+
+        if (current) {
+          setActive(current.id);
+        }
+      };
+
+      let ticking = false;
+      const handleScroll = () => {
+        if (ticking) return;
+        ticking = true;
+        window.requestAnimationFrame(() => {
+          ticking = false;
+          updateActive();
+        });
+      };
+
+      const controller = new AbortController();
+      const { signal } = controller;
+
+      // SP表示時の開閉機能
+      const toggleButton = root.querySelector('.toc-toggle');
+      if (toggleButton) {
+        const spQuery = window.matchMedia('(max-width: 900px)');
+
+        const handleToggle = () => {
+          if (!spQuery.matches) return;
+
+          const isOpen = root.classList.toggle('is-open');
+          toggleButton.setAttribute('aria-expanded', String(isOpen));
+        };
+
+        toggleButton.addEventListener('click', handleToggle, { signal });
+      }
+
+      window.addEventListener('scroll', handleScroll, { passive: true, signal });
+      window.addEventListener('resize', handleScroll, { passive: true, signal });
+
+      links.forEach((link) => {
+        link.addEventListener(
+          'click',
+          (event) => {
+            const slug = link.dataset.tocSlug;
+            if (!slug) return;
+            event.preventDefault();
+            const heading = document.getElementById(slug);
+            if (!heading) return;
+            scrollToHeading(heading);
+            setActive(slug);
+            if (history && history.replaceState) {
+              history.replaceState(null, '', `#${slug}`);
+            } else {
+              location.hash = slug;
+            }
+          },
+          { signal }
+        );
+      });
+
+      const handleHashChange = (behavior = 'smooth') => {
+        if (!location.hash) return;
+        const targetId = location.hash.slice(1);
+        const heading = document.getElementById(targetId);
+        if (!heading) return;
+        scrollToHeading(heading, behavior);
+        setActive(targetId);
+      };
+
+      const observer = new MutationObserver(() => {
+        if (!document.contains(root)) {
+          controller.abort();
+          observer.disconnect();
+        }
+      });
+
+      observer.observe(document.body, { childList: true, subtree: true });
+
+      window.addEventListener('hashchange', () => handleHashChange('smooth'), { signal });
+
+      if (location.hash) {
+        requestAnimationFrame(() => {
+          handleHashChange('auto');
+        });
+      } else {
+        updateActive();
+      }
+    };
+
+    const setup = () => {
+      document.querySelectorAll('[data-toc-root]').forEach(initToc);
+    };
+
+    setup();
+    document.addEventListener('astro:page-load', setup);
+    document.addEventListener('astro:after-swap', setup);
+  })();
+</script>
+
+<style>
+.toc {
+  padding: 20px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.toc-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: bold;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.toc-toggle-icon {
+  width: 16px;
+  height: 16px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.toc-toggle-icon::before,
+.toc-toggle-icon::after {
+  content: '';
+  position: absolute;
+  background: currentColor;
+  transition: transform 0.2s ease;
+}
+
+.toc-toggle-icon::before {
+  width: 100%;
+  height: 2px;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.toc-toggle-icon::after {
+  width: 2px;
+  height: 100%;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+}
+
+.toc ol {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.toc li {
+  position: relative;
+  padding-left: 14px;
+  line-height: 1.5;
+}
+
+.toc li.depth-3 {
+  padding-left: 28px;
+  font-size: 0.8rem;
+}
+
+.toc li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+  transform: translateY(-50%) scale(0.8);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.toc li.is-active::before {
+  background: var(--accent);
+  transform: translateY(-50%) scale(1);
+}
+
+.toc li a {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.toc li.is-active > a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.toc li a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* SP表示時は非表示 */
+@media (max-width: 900px) {
+  .toc {
+    display: none;
+  }
+}
+
+/* SP表示時の開閉スタイル（将来用） */
+/*
+@media (max-width: 900px) {
+  .toc-toggle {
+    margin-bottom: 0;
+  }
+
+  .toc.is-open .toc-toggle {
+    margin-bottom: 12px;
+  }
+
+  .toc ol {
+    display: none;
+  }
+
+  .toc.is-open ol {
+    display: flex;
+  }
+
+  .toc.is-open .toc-toggle-icon::after {
+    transform: translateX(-50%) scaleY(0);
+  }
+}
+*/
+
+/* PC表示時 */
+@media (min-width: 901px) {
+  .toc ol {
+    display: flex !important;
+  }
+
+  .toc-toggle {
+    cursor: default;
+  }
+
+  .toc-toggle-icon {
+    display: none;
+  }
+}
+</style>

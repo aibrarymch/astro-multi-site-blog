@@ -1,0 +1,121 @@
+---
+interface Props {
+  type?: 'note' | 'tip' | 'warning' | 'caution';
+  title?: string;
+}
+
+const { type = 'note', title } = Astro.props as Props;
+
+const icons = {
+  note: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`,
+  tip: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path></svg>`,
+  warning: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
+  caution: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`,
+};
+
+const defaultTitles = {
+  note: '補足',
+  tip: 'ヒント',
+  warning: '注意',
+  caution: '警告',
+};
+
+const displayTitle = title || defaultTitles[type];
+---
+<aside class={`callout callout-${type}`}>
+  <div class="callout-header">
+    <span class="callout-icon" set:html={icons[type]} />
+    <span class="callout-title">{displayTitle}</span>
+  </div>
+  <div class="callout-content">
+    <slot />
+  </div>
+</aside>
+
+<style>
+  .callout {
+    margin: 24px 0;
+    border-radius: var(--radius-md, 12px);
+    overflow: hidden;
+  }
+
+  .callout-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .callout-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .callout-content {
+    padding: 0 20px 16px;
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  .callout-content > :global(:first-child) {
+    margin-top: 0;
+  }
+
+  .callout-content > :global(:last-child) {
+    margin-bottom: 0;
+  }
+
+  /* Note - Blue */
+  .callout-note {
+    background: var(--callout-note-bg);
+    border: 1px solid var(--callout-note-border);
+  }
+
+  .callout-note .callout-header {
+    color: var(--callout-note-text);
+  }
+
+  /* Tip - Green */
+  .callout-tip {
+    background: var(--callout-tip-bg);
+    border: 1px solid var(--callout-tip-border);
+  }
+
+  .callout-tip .callout-header {
+    color: var(--callout-tip-text);
+  }
+
+  /* Warning - Yellow/Orange */
+  .callout-warning {
+    background: var(--callout-warning-bg);
+    border: 1px solid var(--callout-warning-border);
+  }
+
+  .callout-warning .callout-header {
+    color: var(--callout-warning-text);
+  }
+
+  /* Caution - Red */
+  .callout-caution {
+    background: var(--callout-caution-bg);
+    border: 1px solid var(--callout-caution-border);
+  }
+
+  .callout-caution .callout-header {
+    color: var(--callout-caution-text);
+  }
+
+  @media (max-width: 600px) {
+    .callout-header {
+      padding: 10px 16px;
+    }
+
+    .callout-content {
+      padding: 0 16px 14px;
+    }
+  }
+</style>

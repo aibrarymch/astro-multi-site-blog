@@ -1,0 +1,92 @@
+---
+interface Props {
+  source?: string;
+  sourceUrl?: string;
+}
+
+const { source, sourceUrl } = Astro.props as Props;
+---
+<figure class="quote-block">
+  <blockquote>{Astro.slots.has('default') ? <slot /> : null}</blockquote>
+  {source ? (
+    <figcaption>
+      {sourceUrl ? (
+        <a href={sourceUrl} target="_blank" rel="noopener noreferrer">
+          {source}
+        </a>
+      ) : (
+        <span>{source}</span>
+      )}
+    </figcaption>
+  ) : null}
+</figure>
+
+<style>
+  .quote-block {
+    position: relative;
+    padding: 20px 24px;
+    margin: 24px 0;
+    border-radius: var(--radius-md, 12px);
+    background: var(--bg-code, #f8fafc);
+    border: 1px solid var(--border-code, rgba(148, 163, 184, 0.6));
+  }
+
+  .quote-block::before {
+    content: '"';
+    position: absolute;
+    top: 10px;
+    left: 18px;
+    font-size: 2.6rem;
+    font-weight: 700;
+    color: var(--quote-border);
+    pointer-events: none;
+  }
+
+  blockquote {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--text-primary, #1f2933);
+    font-size: 0.95rem;
+    line-height: 1.8;
+    position: relative;
+  }
+
+  blockquote p {
+    margin: 0;
+  }
+
+  figcaption {
+    margin-top: 14px;
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #4c566a);
+  }
+
+  figcaption a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2px;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+
+  figcaption a:hover {
+    color: var(--accent, #3c6e71);
+    border-color: currentColor;
+  }
+
+  @media (max-width: 600px) {
+    .quote-block {
+      padding: 18px 18px;
+    }
+
+    .quote-block::before {
+      left: 14px;
+      font-size: 2.2rem;
+    }
+
+    blockquote {
+      padding-left: 16px;
+    }
+  }
+</style>

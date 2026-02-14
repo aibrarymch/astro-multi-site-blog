@@ -1,0 +1,240 @@
+---
+interface Props {
+  postSlug: string;
+}
+
+const { postSlug } = Astro.props;
+---
+
+<div id="age-restriction-overlay" class="overlay-container" data-post-slug={postSlug}>
+  <div class="overlay-backdrop"></div>
+  <div class="overlay-modal">
+    <div class="warning-icon">⚠️</div>
+    <h2>年齢確認</h2>
+    <p class="disclaimer">
+      このコンテンツは成人向けです。<br class="pc-only">
+      アクセスすることで、あなたが制限年齢以上で<br class="pc-only">
+      あることを確認したものとみなされます。<br class="pc-only">
+      お住まいの地域の法令に従ってご利用ください。
+    </p>
+    <div class="button-group">
+      <button id="age-confirm-yes" class="btn-primary">
+        18歳以上です
+      </button>
+      <button id="age-confirm-no" class="btn-secondary">
+        18歳未満です / 戻る
+      </button>
+    </div>
+    <label class="remember-choice">
+      <input type="checkbox" id="remember-age-confirmation" checked>
+      <span>しばらくこの確認を表示しない</span>
+    </label>
+  </div>
+</div>
+
+<script>
+  class AgeRestrictionManager {
+    private cookieName = 'age_verified';
+    private cookieExpireDays = 30;
+
+    constructor() {
+      this.init();
+    }
+
+    init() {
+      const overlay = document.getElementById('age-restriction-overlay');
+      if (!overlay) return;
+
+      const isVerified = this.checkAgeVerification();
+      if (isVerified) {
+        this.hideOverlay();
+      } else {
+        this.showOverlay();
+        this.setupEventListeners();
+      }
+    }
+
+    setupEventListeners() {
+      const confirmBtn = document.getElementById('age-confirm-yes');
+      const denyBtn = document.getElementById('age-confirm-no');
+      const rememberCheckbox = document.getElementById('remember-age-confirmation') as HTMLInputElement;
+
+      confirmBtn?.addEventListener('click', () => {
+        if (rememberCheckbox?.checked) {
+          this.setAgeVerificationCookie();
+        }
+        this.hideOverlay();
+      });
+
+      denyBtn?.addEventListener('click', () => {
+        window.history.back();
+      });
+    }
+
+    checkAgeVerification(): boolean {
+      const cookies = document.cookie.split(';');
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === this.cookieName && value === 'true') {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    setAgeVerificationCookie() {
+      const date = new Date();
+      date.setTime(date.getTime() + (this.cookieExpireDays * 24 * 60 * 60 * 1000));
+      const expires = `expires=${date.toUTCString()}`;
+      document.cookie = `${this.cookieName}=true;${expires};path=/;SameSite=Lax`;
+    }
+
+    showOverlay() {
+      const overlay = document.getElementById('age-restriction-overlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    hideOverlay() {
+      const overlay = document.getElementById('age-restriction-overlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    new AgeRestrictionManager();
+  });
+</script>
+
+<style>
+  .overlay-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .overlay-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-overlay);
+    backdrop-filter: blur(5px);
+  }
+
+  .overlay-modal {
+    position: relative;
+    background: var(--bg-modal);
+    border-radius: var(--radius-lg, 12px);
+    padding: 40px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    text-align: center;
+  }
+
+  .warning-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+  }
+
+  .overlay-modal h2 {
+    margin: 0 0 16px;
+    font-size: 1.8rem;
+    color: var(--text-modal);
+  }
+
+  .disclaimer {
+    margin: 0 0 32px;
+    padding: 12px;
+    background: var(--bg-disclaimer);
+    border: 1px solid var(--border-disclaimer);
+    border-radius: var(--radius-sm, 6px);
+    font-size: 0.85rem;
+    color: var(--text-modal);
+    line-height: 1.5;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .button-group button {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--radius-sm, 6px);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary {
+    background: var(--accent, #3C6E71);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: var(--accent-hover, #2A4D4F);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: var(--bg-btn-secondary);
+    color: var(--text-btn-secondary);
+  }
+
+  .btn-secondary:hover {
+    background: var(--bg-btn-secondary-hover);
+  }
+
+  .remember-choice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  .remember-choice input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+
+  @media (max-width: 480px) {
+    .overlay-modal {
+      padding: 30px 20px;
+    }
+
+    .button-group {
+      flex-direction: column;
+    }
+
+    .warning-icon {
+      font-size: 36px;
+    }
+
+    .overlay-modal h2 {
+      font-size: 1.5rem;
+    }
+  }
+</style>

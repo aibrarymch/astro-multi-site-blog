@@ -1,0 +1,99 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ExplorePanel from '../../../components/ExplorePanel.astro';
+import PostCard from '../../../components/PostCard.astro';
+import Pagination from '../../../components/Pagination.astro';
+import { getFilteredPosts, getFilteredScraps, aggregateTaxonomy, type UnifiedPost } from '../../../utils/categoryFilter';
+import { SITE_NAME, shouldGenerateListingPages, POSTS_PER_PAGE } from '../../../utils/siteConfig';
+
+export const getStaticPaths = (async () => {
+  // all以外のサイトではリスティングページを生成しない
+  if (!shouldGenerateListingPages()) {
+    return [];
+  }
+
+  const POST_TYPES = {
+    blog: { label: 'ブログ記事', description: 'ブログ記事' },
+    scrap: { label: '作業ログ', description: '作業ログ' },
+  } as const;
+
+  type PostType = keyof typeof POST_TYPES;
+
+  const posts = await getFilteredPosts();
+  const scraps = await getFilteredScraps();
+  const allTaxonomy = aggregateTaxonomy(posts, scraps);
+  const postCounts = { blog: posts.length, scrap: scraps.length };
+
+  const typeEntries: Record<PostType, UnifiedPost[]> = {
+    blog: posts.map(entry => ({ type: 'blog' as const, entry })),
+    scrap: scraps.map(entry => ({ type: 'scrap' as const, entry })),
+  };
+
+  return Object.entries(typeEntries).flatMap(([typeName, entries]) => {
+    const sortedEntries = entries.sort(
+      (a, b) => b.entry.data.publishedAt.getTime() - a.entry.data.publishedAt.getTime()
+    );
+    const totalPages = Math.ceil(sortedEntries.length / POSTS_PER_PAGE);
+    const pages = totalPages === 0 ? 1 : totalPages;
+
+    return Array.from({ length: pages }, (_, i) => {
+      const pageNum = i + 1;
+      const start = i * POSTS_PER_PAGE;
+      const end = start + POSTS_PER_PAGE;
+
+      return {
+        params: { type: typeName, page: String(pageNum) },
+        props: {
+          typeName: typeName as PostType,
+          typeInfo: POST_TYPES[typeName as PostType],
+          taxonomy: allTaxonomy,
+          postCounts,
+          page: {
+            data: sortedEntries.slice(start, end),
+            currentPage: pageNum,
+            lastPage: pages,
+          }
+        }
+      };
+    });
+  });
+}) satisfies GetStaticPaths;
+
+interface Props {
+  typeName: 'blog' | 'scrap';
+  typeInfo: { label: string; description: string };
+  taxonomy: ReturnType<typeof aggregateTaxonomy>;
+  postCounts: { blog: number; scrap: number };
+  page: {
+    data: UnifiedPost[];
+    currentPage: number;
+    lastPage: number;
+  };
+}
+
+const { typeName, typeInfo, taxonomy, postCounts, page } = Astro.props;
+const { categories, tags } = taxonomy;
+---
+<BaseLayout title={`${typeInfo.label}一覧 | ${SITE_NAME}`} description={`${typeInfo.description}の一覧です。`}>
+  <section class="grid-stack">
+    <h1>{typeInfo.label}一覧</h1>
+    {page.data.map((item) => (
+      <PostCard entry={item.entry} type={item.type} />
+    ))}
+  </section>
+  {page.lastPage > 1 && (
+    <Pagination
+      currentPage={page.currentPage}
+      totalPages={page.lastPage}
+      baseUrl={`/types/${typeName}/`}
+    />
+  )}
+  <ExplorePanel slot="sidebar" categories={categories} tags={tags} postCounts={postCounts} title="フィルター" />
+</BaseLayout>
+
+<style>
+.grid-stack h1 {
+  margin-top: 0;
+}
+</style>

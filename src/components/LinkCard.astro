@@ -1,0 +1,164 @@
+---
+import type { OgData } from '../utils/fetchOgData';
+import { fetchOgData } from '../utils/fetchOgData';
+
+interface Props {
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  imageFit?: 'cover' | 'contain'; // SP表示時は常に `cover` になります
+}
+
+const props = Astro.props as Props;
+if (!props.url) {
+  throw new Error('LinkCard requires a `url` prop.');
+}
+
+let baseUrl = props.url;
+try {
+  baseUrl = new URL(props.url).toString();
+} catch {
+  throw new Error(`LinkCard received an invalid URL: ${props.url}`);
+}
+
+let fetched: OgData | undefined;
+if (!props.title || !props.description || !props.image) {
+  fetched = await fetchOgData(baseUrl);
+}
+
+const finalTitle = props.title ?? fetched?.title ?? baseUrl;
+const finalDescription = props.description ?? fetched?.description;
+// ローカルにキャッシュされた画像を優先、なければ外部URLを使用
+const finalImage = props.image ?? fetched?.localImage ?? fetched?.image;
+const imageFit = props.imageFit ?? 'cover';
+const favicon = fetched?.favicon;
+---
+<a class="blog-card" href={baseUrl} target="_blank" rel="noopener noreferrer">
+  {finalImage ? (
+    <div class={`thumbnail fit-${imageFit}`}>
+      <img src={finalImage} alt={finalTitle} loading="lazy" decoding="async" />
+    </div>
+  ) : null}
+  <div class="content">
+    <h3>{finalTitle}</h3>
+    {finalDescription ? <p>{finalDescription}</p> : null}
+    <span class="link-info">
+      {favicon ? (
+        <img class="favicon" src={favicon} alt="" loading="lazy" decoding="async" />
+      ) : null}
+      <span class="link-url">{baseUrl}</span>
+    </span>
+  </div>
+</a>
+
+<style>
+  .blog-card {
+    margin: 28px 0;
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: 18px;
+    align-items: stretch;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    text-decoration: none;
+    color: inherit;
+    overflow: hidden;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .blog-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .thumbnail {
+    position: relative;
+    background: var(--bg-thumb);
+  }
+
+  .thumbnail img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-position: center;
+  }
+
+  .fit-cover img {
+    object-fit: cover;
+  }
+
+  .fit-contain img {
+    object-fit: contain;
+  }
+  @media (max-width: 720px) {
+    .fit-contain img {
+      object-fit: cover;
+    }
+  }
+
+  .content {
+    padding: 18px 18px 18px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .favicon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--bg-favicon);
+    padding: 2px;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-primary);
+    line-height: 1.4;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+
+  .link-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: var(--accent);
+    margin-top: auto;
+    word-break: break-all;
+  }
+
+  .link-url {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 720px) {
+    .blog-card {
+      grid-template-columns: 1fr;
+    }
+
+    .content {
+      padding: 0 18px 18px 18px;
+    }
+
+    .thumbnail {
+      height: 180px;
+    }
+  }
+</style>

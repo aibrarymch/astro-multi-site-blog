@@ -1,0 +1,165 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostTaxonomy from '../../components/PostTaxonomy.astro';
+import ExplorePanel from '../../components/ExplorePanel.astro';
+import AuthorProfile from '../../components/AuthorProfile.astro';
+import AgeRestrictionOverlay from '../../components/AgeRestrictionOverlay.astro';
+import ShareButtons from '../../components/ShareButtons.astro';
+import ScrapTableOfContents from '../../components/ScrapTableOfContents.astro';
+import { type CollectionEntry } from 'astro:content';
+import { formatDate } from '../../utils/date';
+import { getAllPosts, aggregateTaxonomy, getScrapsForDetailPages } from '../../utils/categoryFilter';
+import { SITE_NAME, SITE_CONFIG, getSiteUrl, shouldGenerateListingPages } from '../../utils/siteConfig';
+
+export async function getStaticPaths() {
+  const scraps = await getScrapsForDetailPages();
+  return scraps.map((scrap) => ({
+    params: { slug: scrap.slug },
+    props: { scrap }
+  }));
+}
+
+const allSiteUrl = getSiteUrl(SITE_CONFIG['all']);
+const isAllSite = shouldGenerateListingPages();
+
+interface Props {
+  scrap: CollectionEntry<'scraps'>;
+}
+
+const { scrap } = Astro.props as Props;
+const { Content } = await scrap.render();
+
+const allPosts = await getAllPosts();
+const { categories, tags } = aggregateTaxonomy(allPosts);
+
+const scrapUrl = new URL(`/scraps/${scrap.slug}/`, Astro.site).toString();
+---
+<BaseLayout
+  title={`${scrap.data.title} | ${SITE_NAME}`}
+  description={scrap.data.excerpt}
+  ogType="article"
+  ageRestricted={scrap.data.ageRestricted}>
+  {scrap.data.ageRestricted && (
+    <AgeRestrictionOverlay postSlug={scrap.slug} />
+  )}
+  <article class="scrap-content post-content">
+    <header class="scrap-header">
+      <div class="scrap-meta">
+        <span class="type-badge">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          作業メモ
+        </span>
+        {scrap.data.closed && (
+          <span class="closed-badge">完結</span>
+        )}
+      </div>
+      <h1>{scrap.data.title}</h1>
+      <p class="dates">開始: {formatDate(scrap.data.publishedAt)} ／ 最終更新: {formatDate(scrap.data.updatedAt)}</p>
+      <PostTaxonomy category={scrap.data.category} tags={scrap.data.tags} baseUrl={isAllSite ? '' : allSiteUrl} />
+    </header>
+
+    <div class="scrap-thread">
+      <Content />
+    </div>
+
+    <ShareButtons title={scrap.data.title} url={scrapUrl} />
+  </article>
+
+  <div class="scrap-author">
+    <AuthorProfile wide />
+  </div>
+
+  <div class="scrap-explore">
+    <ExplorePanel categories={categories} tags={tags} title="探索" baseUrl={isAllSite ? '' : allSiteUrl} />
+  </div>
+
+  <div slot="sidebar" class="sidebar-stack">
+    <ScrapTableOfContents />
+  </div>
+</BaseLayout>
+
+<style>
+.scrap-content {
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.scrap-header {
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.scrap-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.type-badge .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.closed-badge {
+  font-size: 0.75rem;
+  background: var(--text-secondary);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.scrap-header h1 {
+  margin: 0;
+}
+
+.dates {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 12px 0;
+}
+
+.scrap-thread {
+  margin-top: 32px;
+}
+
+.scrap-author {
+  margin-top: 32px;
+}
+
+.scrap-explore {
+  margin-top: 24px;
+}
+
+.sidebar-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 96px;
+}
+
+@media (max-width: 900px) {
+  .sidebar-stack {
+    position: static;
+  }
+}
+</style>

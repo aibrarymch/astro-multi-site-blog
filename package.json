@@ -1,0 +1,29 @@
+{
+  "name": "astro-blog",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx scripts/dev.ts",
+    "build": "tsx scripts/build.ts",
+    "preview": "astro preview",
+    "preview:diary": "cross-env SITE_TYPE=diary astro preview",
+    "preview:adult": "cross-env SITE_TYPE=adult astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^5.16.4"
+  },
+  "devDependencies": {
+    "@astrojs/mdx": "^4.3.12",
+    "@astrojs/rss": "^4.0.14",
+    "@astrojs/sitemap": "^3.6.0",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "node-html-parser": "^7.0.1",
+    "satori": "^0.18.3",
+    "sharp": "^0.33.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.4.5"
+  }
+}

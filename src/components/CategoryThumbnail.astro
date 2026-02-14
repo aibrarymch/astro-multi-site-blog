@@ -1,0 +1,71 @@
+---
+/**
+ * カテゴリサムネイルコンポーネント
+ * カテゴリに応じたSVGアイコンと背景色でサムネイルを表示
+ * ライト/ダークテーマに対応
+ */
+import { getCategoryThumbnail } from '../utils/siteHelpers';
+
+interface Props {
+  category: string;
+  alt?: string;
+  width?: number | string;
+  height?: number | string;
+}
+
+const { category, alt = '', width = 160, height = 160 } = Astro.props;
+const config = getCategoryThumbnail(category);
+const { light, dark } = config;
+
+// サイズ文字列の生成（数値ならpxを付与、文字列ならそのまま）
+const widthStr = typeof width === 'number' ? `${width}px` : width;
+const heightStr = typeof height === 'number' ? `${height}px` : height;
+
+// アイコンサイズ（固定値）
+const iconSize = 72;
+
+// ライトテーマ用SVG
+const lightSvg = `<svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${light.svg}</svg>`;
+// ダークテーマ用SVG
+const darkSvg = `<svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${dark.svg}</svg>`;
+---
+
+<div 
+  class="category-thumbnail"
+  role="img" 
+  aria-label={alt || `${category}カテゴリ`}
+  style={`--light-bg: ${light.bgColor}; --dark-bg: ${dark.bgColor}; width: ${widthStr}; height: ${heightStr};`}
+>
+  <span class="light-icon"><Fragment set:html={lightSvg} /></span>
+  <span class="dark-icon"><Fragment set:html={darkSvg} /></span>
+</div>
+
+<style>
+.category-thumbnail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md, 8px);
+  background-color: var(--light-bg);
+}
+
+.category-thumbnail .light-icon {
+  display: flex;
+}
+
+.category-thumbnail .dark-icon {
+  display: none;
+}
+
+:global([data-theme="dark"]) .category-thumbnail {
+  background-color: var(--dark-bg);
+}
+
+:global([data-theme="dark"]) .category-thumbnail .light-icon {
+  display: none;
+}
+
+:global([data-theme="dark"]) .category-thumbnail .dark-icon {
+  display: flex;
+}
+</style>

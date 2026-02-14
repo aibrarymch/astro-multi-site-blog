@@ -1,0 +1,62 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ExplorePanel from '../components/ExplorePanel.astro';
+import PostCard from '../components/PostCard.astro';
+import Pagination from '../components/Pagination.astro';
+import { getSortedFilteredUnifiedPosts, aggregateTaxonomy, getAllPosts, getFilteredScraps, type UnifiedPost } from '../utils/categoryFilter';
+import { shouldGenerateListingPages, POSTS_PER_PAGE } from '../utils/siteConfig';
+
+export const getStaticPaths = (async () => {
+  // all以外のサイトではリスティングページを生成しない
+  if (!shouldGenerateListingPages()) {
+    return [];
+  }
+
+  const posts = await getSortedFilteredUnifiedPosts();
+  const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
+
+  // ページが0件の場合も1ページ目は生成
+  const pages = totalPages === 0 ? 1 : totalPages;
+
+  return Array.from({ length: pages }, (_, i) => {
+    const pageNum = i + 1;
+    const start = i * POSTS_PER_PAGE;
+    const end = start + POSTS_PER_PAGE;
+
+    return {
+      // 1ページ目は undefined (= /) 、2ページ目以降は /2/, /3/...
+      params: { page: pageNum === 1 ? undefined : String(pageNum) },
+      props: {
+        page: {
+          data: posts.slice(start, end),
+          currentPage: pageNum,
+          lastPage: pages,
+        }
+      }
+    };
+  });
+}) satisfies GetStaticPaths;
+
+const { page } = Astro.props;
+// カテゴリ/タグ集計はブログ記事とスクラップから
+const allPosts = await getAllPosts();
+const allScraps = await getFilteredScraps();
+const { categories, tags } = aggregateTaxonomy(allPosts, allScraps);
+const postCounts = { blog: allPosts.length, scrap: allScraps.length };
+---
+<BaseLayout>
+  <section class="grid-stack">
+    {page.data.map((item: UnifiedPost) => (
+      <PostCard entry={item.entry} type={item.type} />
+    ))}
+  </section>
+  {page.lastPage > 1 && (
+    <Pagination
+      currentPage={page.currentPage}
+      totalPages={page.lastPage}
+      baseUrl="/"
+    />
+  )}
+  <ExplorePanel slot="sidebar" categories={categories} tags={tags} postCounts={postCounts} />
+</BaseLayout>

@@ -1,0 +1,120 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TableOfContents from '../../components/TableOfContents.astro';
+import PostTaxonomy from '../../components/PostTaxonomy.astro';
+import ExplorePanel from '../../components/ExplorePanel.astro';
+import AuthorProfile from '../../components/AuthorProfile.astro';
+import AgeRestrictionOverlay from '../../components/AgeRestrictionOverlay.astro';
+import ShareButtons from '../../components/ShareButtons.astro';
+import { type CollectionEntry } from 'astro:content';
+import { formatDate } from '../../utils/date';
+import { getAllPosts, aggregateTaxonomy, getPostsForDetailPages } from '../../utils/categoryFilter';
+import { SITE_NAME, SITE_CONFIG, getSiteUrl, shouldGenerateListingPages } from '../../utils/siteConfig';
+import { getThumbnail } from '../../utils/getThumbnail';
+
+export async function getStaticPaths() {
+  const posts = await getPostsForDetailPages();
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post }
+  }));
+}
+
+// ALLサイトのURLを取得（リスティングページへのリンク用）
+const allSiteUrl = getSiteUrl(SITE_CONFIG['all']);
+const isAllSite = shouldGenerateListingPages();
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props as Props;
+const { Content, headings } = await post.render();
+
+// カテゴリ/タグ件数はALLサイト基準で表示
+const allPosts = await getAllPosts();
+const { categories, tags } = aggregateTaxonomy(allPosts);
+
+const postUrl = new URL(`/posts/${post.slug}/`, Astro.site).toString();
+const thumbnail = getThumbnail(post.slug, post.data.thumbnail, post.data.title);
+---
+<BaseLayout
+  title={`${post.data.title} | ${SITE_NAME}`}
+  description={post.data.excerpt}
+  ogImage={thumbnail}
+  ogType="article"
+  ageRestricted={post.data.ageRestricted}
+  article={{
+    title: post.data.title,
+    description: post.data.excerpt,
+    publishedAt: post.data.publishedAt,
+    updatedAt: post.data.updatedAt,
+    thumbnail: thumbnail,
+    slug: post.slug,
+    category: post.data.category,
+  }}>
+  {post.data.ageRestricted && (
+    <AgeRestrictionOverlay postSlug={post.slug} />
+  )}
+  <article class="post-content">
+    <header>
+      <h1>{post.data.title}</h1>
+      <p class="meta">公開: {formatDate(post.data.publishedAt)} ／ 更新: {formatDate(post.data.updatedAt)}</p>
+      <PostTaxonomy category={post.data.category} tags={post.data.tags} baseUrl={isAllSite ? '' : allSiteUrl} />
+    </header>
+    <Content />
+    <ShareButtons title={post.data.title} url={postUrl} />
+  </article>
+  <div class="post-author">
+    <AuthorProfile wide />
+  </div>
+  <div class="post-explore">
+    <ExplorePanel categories={categories} tags={tags} title="探索" baseUrl={isAllSite ? '' : allSiteUrl} />
+  </div>
+  <div slot="sidebar" class="sidebar-stack">
+    <TableOfContents headings={headings} />
+  </div>
+</BaseLayout>
+
+<style>
+.post-content .meta {
+  margin: 12px 0 16px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.post-content .lead {
+  margin: 24px 0 32px;
+  padding: 16px 18px;
+  border-left: 4px solid var(--accent);
+  background: rgba(60, 110, 113, 0.06);
+  border-radius: var(--radius-sm);
+}
+
+.post-content .lead p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.sidebar-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 96px;
+}
+
+@media (max-width: 900px) {
+  .sidebar-stack {
+    position: static;
+  }
+}
+
+.post-author {
+  margin-top: 32px;
+}
+
+.post-explore {
+  margin-top: 24px;
+}
+</style>

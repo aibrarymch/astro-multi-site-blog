@@ -1,0 +1,14 @@
+.DS_Store
+
+node_modules
+dist
+dist_*
+
+.astro
+.serena
+.playwright-mcp
+
+# OGP画像キャッシュ
+public/ogp
+public/ogp-cache
+.cache

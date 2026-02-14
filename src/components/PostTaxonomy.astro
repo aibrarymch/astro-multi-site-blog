@@ -1,0 +1,48 @@
+---
+import { slugify } from '../utils/slugify';
+
+interface Props {
+  category: string;
+  tags: string[];
+  baseUrl?: string;
+}
+
+const { category, tags, baseUrl = '' } = Astro.props;
+---
+<div class="post-taxonomy">
+  <a class="category-link" href={`${baseUrl}/categories/${slugify(category)}/1/`}>
+    {category}
+  </a>
+  {tags.map((tag) => (
+    <a class="tag-link" href={`${baseUrl}/tags/${slugify(tag)}/1/`}>#{tag}</a>
+  ))}
+</div>
+
+<style>
+.post-taxonomy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.post-taxonomy .category-link,
+.post-taxonomy .tag-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.7rem;
+  line-height: 1.8;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.post-taxonomy .category-link:hover,
+.post-taxonomy .tag-link:hover {
+  background: var(--accent-soft-hover);
+  text-decoration: underline;
+}
+</style>

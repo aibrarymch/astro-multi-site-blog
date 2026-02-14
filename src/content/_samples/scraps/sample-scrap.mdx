@@ -1,0 +1,43 @@
+---
+title: "サンプルスクラップ"
+category: "パーツ"
+tags:
+  - メモ
+  - テスト
+publishedAt: 2024-05-25
+updatedAt: 2024-05-26
+excerpt: "スクラップ機能のテスト用サンプルです"
+draft: false
+closed: true
+---
+
+import ScrapEntry from '../../../components/ScrapEntry.astro';
+import ScrapClosed from '../../../components/ScrapClosed.astro';
+import CodeBlock from '../../../components/CodeBlock.astro';
+
+<ScrapEntry datetime="2024-05-25T10:00:00">
+これはスクラップ機能のテストです。
+
+Zennのスクラップのように、気軽にメモを追記していけます。
+</ScrapEntry>
+
+<ScrapEntry datetime="2024-05-25T14:30:00">
+コードブロックも使えます:
+
+<CodeBlock lang="bash" copyMode="button">mkdir astro-blog
+cd astro-blog
+npm install
+npm run dev</CodeBlock>
+
+- リスト項目1
+- リスト項目2
+- リスト項目3
+</ScrapEntry>
+
+<ScrapEntry datetime="2024-05-26T09:15:00">
+翌日の追記です。
+
+新しい知見があればどんどん追加していきましょう。
+</ScrapEntry>
+
+<ScrapClosed />

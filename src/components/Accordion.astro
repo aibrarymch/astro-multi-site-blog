@@ -1,0 +1,93 @@
+---
+interface Props {
+  title: string;
+  open?: boolean;
+}
+
+const { title, open = false } = Astro.props as Props;
+---
+<details class="accordion" open={open}>
+  <summary class="accordion-header">
+    <span class="accordion-title">{title}</span>
+    <span class="accordion-icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </span>
+  </summary>
+  <div class="accordion-content">
+    <slot />
+  </div>
+</details>
+
+<style>
+  .accordion {
+    margin: 24px 0;
+    border-radius: var(--radius-md, 12px);
+    background: var(--bg-code, #f8fafc);
+    border: 1px solid var(--border-code, rgba(148, 163, 184, 0.6));
+    overflow: hidden;
+  }
+
+  .accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: background-color 0.2s ease;
+  }
+
+  .accordion-header::-webkit-details-marker {
+    display: none;
+  }
+
+  .accordion-header:hover {
+    background: var(--accent-soft);
+  }
+
+  .accordion-title {
+    font-weight: 600;
+    color: var(--text-primary, #1f2933);
+    font-size: 0.95rem;
+  }
+
+  .accordion-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary, #4c566a);
+    transition: transform 0.3s ease;
+  }
+
+  .accordion[open] .accordion-icon {
+    transform: rotate(180deg);
+  }
+
+  .accordion-content {
+    padding: 0 20px 20px;
+    color: var(--text-primary, #1f2933);
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  .accordion-content > :first-child {
+    margin-top: 0;
+  }
+
+  .accordion-content > :last-child {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 600px) {
+    .accordion-header {
+      padding: 14px 16px;
+    }
+
+    .accordion-content {
+      padding: 0 16px 16px;
+    }
+  }
+</style>

@@ -1,0 +1,103 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ExplorePanel from '../../../components/ExplorePanel.astro';
+import PostCard from '../../../components/PostCard.astro';
+import Pagination from '../../../components/Pagination.astro';
+import { slugify } from '../../../utils/slugify';
+import { getFilteredPosts, getFilteredScraps, aggregateTaxonomy, type UnifiedPost } from '../../../utils/categoryFilter';
+import { SITE_NAME, shouldGenerateListingPages, POSTS_PER_PAGE } from '../../../utils/siteConfig';
+
+export const getStaticPaths = (async () => {
+  // all以外のサイトではリスティングページを生成しない
+  if (!shouldGenerateListingPages()) {
+    return [];
+  }
+
+  const posts = await getFilteredPosts();
+  const scraps = await getFilteredScraps();
+  const map = new Map<string, UnifiedPost[]>();
+
+  for (const post of posts) {
+    const list = map.get(post.data.category) ?? [];
+    list.push({ type: 'blog', entry: post });
+    map.set(post.data.category, list);
+  }
+
+  for (const scrap of scraps) {
+    const list = map.get(scrap.data.category) ?? [];
+    list.push({ type: 'scrap', entry: scrap });
+    map.set(scrap.data.category, list);
+  }
+
+  const allTaxonomy = aggregateTaxonomy(posts, scraps);
+  const postCounts = { blog: posts.length, scrap: scraps.length };
+
+  return Array.from(map.entries()).flatMap(([categoryName, entries]) => {
+    const sortedEntries = entries.sort(
+      (a, b) => b.entry.data.publishedAt.getTime() - a.entry.data.publishedAt.getTime()
+    );
+    const categorySlug = slugify(categoryName);
+    const totalPages = Math.ceil(sortedEntries.length / POSTS_PER_PAGE);
+    const pages = totalPages === 0 ? 1 : totalPages;
+
+    return Array.from({ length: pages }, (_, i) => {
+      const pageNum = i + 1;
+      const start = i * POSTS_PER_PAGE;
+      const end = start + POSTS_PER_PAGE;
+
+      return {
+        params: { category: categorySlug, page: String(pageNum) },
+        props: {
+          categoryName,
+          taxonomy: allTaxonomy,
+          categorySlug,
+          postCounts,
+          page: {
+            data: sortedEntries.slice(start, end),
+            currentPage: pageNum,
+            lastPage: pages,
+          }
+        }
+      };
+    });
+  });
+}) satisfies GetStaticPaths;
+
+interface Props {
+  categoryName: string;
+  taxonomy: ReturnType<typeof aggregateTaxonomy>;
+  categorySlug: string;
+  postCounts: { blog: number; scrap: number };
+  page: {
+    data: UnifiedPost[];
+    currentPage: number;
+    lastPage: number;
+  };
+}
+
+const { categoryName, taxonomy, categorySlug, postCounts, page } = Astro.props;
+const { categories, tags } = taxonomy;
+---
+<BaseLayout title={`${categoryName} の記事 | ${SITE_NAME}`} description={`${categoryName} に関する記事一覧です。`}>
+  <section class="grid-stack">
+    <h1>{categoryName} の記事</h1>
+    {page.data.map((item) => (
+      <PostCard entry={item.entry} type={item.type} />
+    ))}
+  </section>
+  {page.lastPage > 1 && (
+    <Pagination
+      currentPage={page.currentPage}
+      totalPages={page.lastPage}
+      baseUrl={`/categories/${categorySlug}/`}
+    />
+  )}
+  <ExplorePanel slot="sidebar" categories={categories} tags={tags} postCounts={postCounts} title="フィルター" />
+</BaseLayout>
+
+<style>
+.grid-stack h1 {
+  margin-top: 0;
+}
+</style>
