@@ -74,11 +74,15 @@ import Callout from '../../../../components/Callout.astro';
 
 ## コードブロック
 
-
-<CodeBlock lang="bash" copyMode="button">mkdir astro-blog
-cd astro-blog
-npm install
-npm run dev</CodeBlock>
+{/* MDXパーサーが各行の先頭2スペースを除去するため、+2スペースで相殺する */}
+<CodeBlock lang="bash" copyMode="button">{`{
+    "name": "astro-multi-site-blog",
+    "version": "0.1.0",
+    "scripts": {
+      "dev": "astro dev",
+      "build": "astro build",
+      "preview": "astro preview"
+  }}`}</CodeBlock>
 
 全体クリック可能モード
 
