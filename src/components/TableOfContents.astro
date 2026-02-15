@@ -3,9 +3,10 @@ import type { MarkdownHeading } from 'astro';
 
 interface Props {
   headings: MarkdownHeading[];
+  showIntro?: boolean;
 }
 
-const { headings } = Astro.props;
+const { headings, showIntro = true } = Astro.props;
 const items = headings.filter((heading) => heading.depth >= 2 && heading.depth <= 3);
 ---
 {items.length > 0 ? (
@@ -15,6 +16,11 @@ const items = headings.filter((heading) => heading.depth >= 2 && heading.depth <
       <span class="toc-toggle-icon" aria-hidden="true"></span>
     </button>
     <ol id="toc-list">
+      {showIntro && (
+        <li class="depth-2">
+          <a href="#article-body" data-toc-slug="article-body">はじめに</a>
+        </li>
+      )}
       {items.map((heading) => (
         <li class={`depth-${heading.depth}`}>
           <a href={`#${heading.slug}`} data-toc-slug={heading.slug}>{heading.text}</a>

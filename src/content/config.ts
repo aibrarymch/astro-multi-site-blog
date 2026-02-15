@@ -11,7 +11,8 @@ const blog = defineCollection({
     excerpt: z.string().max(160),
     thumbnail: z.string().optional(),
     draft: z.boolean().default(false),
-    ageRestricted: z.boolean().default(false)
+    ageRestricted: z.boolean().default(false),
+    hideIntroToc: z.boolean().default(false)
   })
 });
 
@@ -43,7 +44,8 @@ const _samples = defineCollection({
     thumbnail: z.string().optional(),
     draft: z.boolean().default(false),
     ageRestricted: z.boolean().default(false),
-    closed: z.boolean().default(false)
+    closed: z.boolean().default(false),
+    hideIntroToc: z.boolean().default(false)
   })
 });
 

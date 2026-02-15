@@ -101,10 +101,26 @@ publishedAt: 2024-01-01
 updatedAt: 2024-01-01
 ageRestricted: false
 draft: false
+hideIntroToc: false
 ---
 
 記事本文...
 ```
+
+### frontmatter オプション
+
+| フィールド | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `title` | string | （必須） | 記事タイトル |
+| `excerpt` | string | （必須） | 記事の概要（最大160文字） |
+| `category` | string | （必須） | カテゴリ |
+| `tags` | string[] | （必須） | タグ（1つ以上） |
+| `publishedAt` | date | （必須） | 公開日 |
+| `updatedAt` | date | （必須） | 更新日 |
+| `thumbnail` | string | − | サムネイル画像パス |
+| `ageRestricted` | boolean | `false` | 年齢制限コンテンツ |
+| `draft` | boolean | `false` | 下書き |
+| `hideIntroToc` | boolean | `false` | 目次の「はじめに」項目を非表示にする |
 
 ## ディレクトリ構成
 
