@@ -24,7 +24,7 @@ try {
 }
 
 let fetched: OgData | undefined;
-if (!props.title || !props.description || !props.image) {
+if (!props.title || !props.description || (!props.image && !props.noImage)) {
   fetched = await fetchOgData(baseUrl);
 }
 
