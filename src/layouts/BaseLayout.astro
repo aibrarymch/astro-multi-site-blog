@@ -50,8 +50,18 @@ const homeUrl = isAllSite ? '/' : getSiteUrl(SITE_CONFIG['all']);
 <!DOCTYPE html>
 <html lang="ja">
   <head>
-    <!-- FOUC prevention: hide until external CSS is loaded -->
+    <!-- FOUC/FOUT prevention: hide until CSS and fonts are loaded -->
     <style>html { visibility: hidden; }</style>
+    <script is:inline>
+      (function() {
+        document.fonts.ready.then(function() {
+          document.documentElement.style.visibility = 'visible';
+        });
+        setTimeout(function() {
+          document.documentElement.style.visibility = 'visible';
+        }, 3000);
+      })();
+    </script>
 
     <!-- Theme initialization (FOUC prevention) -->
     <script is:inline>
@@ -85,7 +95,6 @@ const homeUrl = isAllSite ? '/' : getSiteUrl(SITE_CONFIG['all']);
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" />
     <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet" />
 
     <meta charset="utf-8" />
