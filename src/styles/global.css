@@ -214,6 +214,10 @@
 }
 
 
+html {
+  visibility: visible;
+}
+
 * {
   box-sizing: border-box;
 }

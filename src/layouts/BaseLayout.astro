@@ -50,6 +50,9 @@ const homeUrl = isAllSite ? '/' : getSiteUrl(SITE_CONFIG['all']);
 <!DOCTYPE html>
 <html lang="ja">
   <head>
+    <!-- FOUC prevention: hide until external CSS is loaded -->
+    <style>html { visibility: hidden; }</style>
+
     <!-- Theme initialization (FOUC prevention) -->
     <script is:inline>
       (function() {
