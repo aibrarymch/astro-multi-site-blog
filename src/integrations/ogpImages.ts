@@ -1,5 +1,5 @@
 import type { AstroIntegration } from 'astro';
-import { readdirSync, readFileSync, existsSync } from 'fs';
+import { readdirSync, readFileSync, existsSync, mkdirSync, copyFileSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import {
@@ -246,6 +246,27 @@ export function ogpImagesIntegration(options: OgpImagesOptions = {}): AstroInteg
       // ビルド時に画像生成
       'astro:build:start': async () => {
         await generateAllOgpImages({ skipExisting, force });
+      },
+      // ビルド完了後にキャッシュ済みOGP画像を出力ディレクトリにコピー
+      // （Viteのpublicコピーはページレンダリング前に完了するため、
+      //  レンダリング中に取得した画像は手動コピーが必要）
+      'astro:build:done': async ({ dir }) => {
+        const sourceDir = join(PROJECT_ROOT, 'public/ogp-cache');
+        if (!existsSync(sourceDir)) return;
+
+        const outputDir = join(fileURLToPath(dir), 'ogp-cache');
+        if (!existsSync(outputDir)) {
+          mkdirSync(outputDir, { recursive: true });
+        }
+
+        const files = readdirSync(sourceDir).filter(f => f.endsWith('.webp'));
+        for (const file of files) {
+          copyFileSync(join(sourceDir, file), join(outputDir, file));
+        }
+
+        if (files.length > 0) {
+          console.log(`[ogp-images] Copied ${files.length} cached OGP images to build output`);
+        }
       },
       // 開発サーバー起動時にも画像生成
       'astro:server:start': async () => {
