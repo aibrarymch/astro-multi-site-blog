@@ -8,6 +8,8 @@ export interface OgData {
   /** ローカルにキャッシュされた画像のパス */
   localImage?: string;
   favicon?: string;
+  /** HTTP取得失敗（404, 403など） */
+  failed?: boolean;
 }
 
 const cache = new Map<string, OgData>();
@@ -48,6 +50,7 @@ export async function fetchOgData(url: string): Promise<OgData> {
   const timeout = setTimeout(() => controller.abort(), 8000);
 
   let html = '';
+  let httpFailed = false;
   try {
     const response = await fetch(url, {
       signal: controller.signal,
@@ -55,15 +58,21 @@ export async function fetchOgData(url: string): Promise<OgData> {
         'User-Agent': 'AstroBlogBot/1.0 (+https://example.com)'
       }
     });
-    html = await response.text();
+    if (!response.ok) {
+      console.warn(`[fetchOgData] HTTP ${response.status} for ${url}`);
+      httpFailed = true;
+    } else {
+      html = await response.text();
+    }
   } catch (error) {
     console.warn(`[fetchOgData] Failed to fetch ${url}:`, error);
+    httpFailed = true;
   } finally {
     clearTimeout(timeout);
   }
 
   if (!html) {
-    const fallback: OgData = {};
+    const fallback: OgData = { failed: httpFailed };
     cache.set(url, fallback);
     return fallback;
   }

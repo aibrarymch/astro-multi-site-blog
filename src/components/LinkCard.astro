@@ -28,31 +28,43 @@ if (!props.title || !props.description || !props.image) {
   fetched = await fetchOgData(baseUrl);
 }
 
+const isFailed = fetched?.failed ?? false;
 const finalTitle = props.title ?? fetched?.title ?? baseUrl;
 const finalDescription = props.description ?? fetched?.description;
 // ローカルにキャッシュされた画像を優先、なければ外部URLを使用
 const finalImage = props.image ?? fetched?.localImage ?? fetched?.image;
 const imageFit = props.imageFit ?? 'cover';
-const noImage = props.noImage ?? false;
+const noImage = props.noImage || !finalImage;
 const favicon = fetched?.favicon;
 ---
-<a class={`blog-card${noImage ? ' no-image' : ''}`} href={baseUrl} target="_blank" rel="noopener noreferrer">
-  {!noImage && finalImage ? (
-    <div class={`thumbnail fit-${imageFit}`}>
-      <img src={finalImage} alt={finalTitle} loading="lazy" decoding="async" />
+{isFailed ? (
+  <div class="blog-card failed no-image">
+    <div class="content">
+      <span class="failed-badge">ページを取得できませんでした</span>
+      <span class="link-info">
+        <span class="link-url">{baseUrl}</span>
+      </span>
     </div>
-  ) : null}
-  <div class="content">
-    <h3>{finalTitle}</h3>
-    {finalDescription ? <p>{finalDescription}</p> : null}
-    <span class="link-info">
-      {favicon ? (
-        <img class="favicon" src={favicon} alt="" loading="lazy" decoding="async" />
-      ) : null}
-      <span class="link-url">{baseUrl}</span>
-    </span>
   </div>
-</a>
+) : (
+  <a class={`blog-card${noImage ? ' no-image' : ''}`} href={baseUrl} target="_blank" rel="noopener noreferrer">
+    {!noImage && finalImage ? (
+      <div class={`thumbnail fit-${imageFit}`}>
+        <img src={finalImage} alt={finalTitle} loading="lazy" decoding="async" />
+      </div>
+    ) : null}
+    <div class="content">
+      <h3>{finalTitle}</h3>
+      {finalDescription ? <p>{finalDescription}</p> : null}
+      <span class="link-info">
+        {favicon ? (
+          <img class="favicon" src={favicon} alt="" loading="lazy" decoding="async" />
+        ) : null}
+        <span class="link-url">{baseUrl}</span>
+      </span>
+    </div>
+  </a>
+)}
 
 <style>
   .blog-card {
@@ -74,8 +86,35 @@ const favicon = fetched?.favicon;
     grid-template-columns: 1fr;
   }
 
-  .blog-card:hover {
+  .blog-card:not(.failed):hover {
     border-color: var(--accent);
+  }
+
+  .blog-card.failed {
+    border-style: dashed;
+    opacity: 0.7;
+    cursor: default;
+  }
+
+  .failed-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .failed-badge::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background-color: var(--text-secondary);
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='8' x2='12' y2='12'/%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'/%3E%3C/svg%3E");
+    mask-size: contain;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='8' x2='12' y2='12'/%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    flex-shrink: 0;
   }
 
   .thumbnail {

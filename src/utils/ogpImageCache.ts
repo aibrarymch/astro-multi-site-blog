@@ -95,33 +95,52 @@ export function getLocalImagePath(imageUrl: string): string | null {
   const manifest = loadManifest();
   const entry = manifest.entries[imageUrl];
 
-  if (!entry) {
-    return null;
+  if (entry) {
+    // 有効期限チェック
+    if (!isCacheValid(entry.cachedAt)) {
+      return null;
+    }
+
+    // ファイルが実際に存在するか確認
+    const fullPath = join(IMAGE_CACHE_DIR, entry.localPath.replace('/ogp-cache/', ''));
+    if (!existsSync(fullPath)) {
+      return null;
+    }
+
+    return entry.localPath;
   }
 
-  // 有効期限チェック
-  if (!isCacheValid(entry.cachedAt)) {
-    return null;
+  // マニフェストにエントリがない場合でも、ハッシュからファイルの存在を確認
+  // （git管理されたキャッシュファイルがあるがマニフェストがない場合のフォールバック）
+  const cacheKey = generateCacheKey(imageUrl);
+  const fileName = `${cacheKey}.webp`;
+  const fullPath = join(IMAGE_CACHE_DIR, fileName);
+
+  if (existsSync(fullPath)) {
+    // マニフェストを復元
+    const localPath = `/ogp-cache/${fileName}`;
+    manifest.entries[imageUrl] = {
+      localPath,
+      cachedAt: new Date().toISOString(),
+    };
+    saveManifest(manifest);
+    return localPath;
   }
 
-  // ファイルが実際に存在するか確認
-  const fullPath = join(IMAGE_CACHE_DIR, entry.localPath.replace('/ogp-cache/', ''));
-  if (!existsSync(fullPath)) {
-    return null;
-  }
-
-  return entry.localPath;
+  return null;
 }
 
 /**
  * 画像をダウンロードしてキャッシュ
- * 成功時はローカルパスを返し、失敗時はnullを返す
+ * dev時はキャッシュを利用し、build時は毎回取得する
  */
 export async function downloadAndCacheImage(imageUrl: string): Promise<string | null> {
-  // 既にキャッシュ済み（有効期限内）の場合はそのパスを返す
-  const existingPath = getLocalImagePath(imageUrl);
-  if (existingPath) {
-    return existingPath;
+  // dev時のみキャッシュを利用（build時は毎回取得して最新化する）
+  if (import.meta.env.DEV) {
+    const existingPath = getLocalImagePath(imageUrl);
+    if (existingPath) {
+      return existingPath;
+    }
   }
 
   ensureImageCacheDir();
