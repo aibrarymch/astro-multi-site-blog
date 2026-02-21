@@ -59,7 +59,7 @@ const scrapUrl = new URL(`/scraps/${scrap.slug}/`, Astro.site).toString();
         )}
       </div>
       <h1>{scrap.data.title}</h1>
-      <p class="dates">開始: {formatDate(scrap.data.publishedAt)} ／ 最終更新: {formatDate(scrap.data.updatedAt)}</p>
+      <p class="dates">開始: {formatDate(scrap.data.publishedAt)}{scrap.data.publishedAt.getTime() !== scrap.data.updatedAt.getTime() && ` ／ 最終更新: ${formatDate(scrap.data.updatedAt)}`}</p>
       <PostTaxonomy category={scrap.data.category} tags={scrap.data.tags} baseUrl={isAllSite ? '' : allSiteUrl} />
     </header>
 

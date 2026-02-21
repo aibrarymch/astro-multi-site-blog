@@ -59,7 +59,7 @@ const thumbnail = getThumbnail(post.slug, post.data.thumbnail, post.data.title);
   <article class="post-content">
     <header>
       <h1>{post.data.title}</h1>
-      <p class="meta">公開: {formatDate(post.data.publishedAt)} ／ 更新: {formatDate(post.data.updatedAt)}</p>
+      <p class="meta">公開: {formatDate(post.data.publishedAt)}{post.data.publishedAt.getTime() !== post.data.updatedAt.getTime() && ` ／ 更新: ${formatDate(post.data.updatedAt)}`}</p>
       <PostTaxonomy category={post.data.category} tags={post.data.tags} baseUrl={isAllSite ? '' : allSiteUrl} />
     </header>
     <div id="article-body"></div>

@@ -61,7 +61,9 @@ if (hasThumbnail) {
     <p class="excerpt">{data.excerpt}</p>
     <div class="meta">
       <span>{isScrap ? '開始' : '公開'}: {formatDate(data.publishedAt)}</span>
-      <span>更新: {formatDate(data.updatedAt)}</span>
+      {data.publishedAt.getTime() !== data.updatedAt.getTime() && (
+        <span>更新: {formatDate(data.updatedAt)}</span>
+      )}
     </div>
   </div>
 </a>
