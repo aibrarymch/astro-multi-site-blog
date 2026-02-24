@@ -14,6 +14,7 @@ closed: true
 import ScrapEntry from '../../../components/ScrapEntry.astro';
 import ScrapClosed from '../../../components/ScrapClosed.astro';
 import CodeBlock from '../../../components/CodeBlock.astro';
+import ImageBlock from '../../../components/ImageBlock.astro';
 
 <ScrapEntry datetime="2024-05-25T10:00:00">
 これはスクラップ機能のテストです。
@@ -38,6 +39,22 @@ npm run dev</CodeBlock>
 翌日の追記です。
 
 新しい知見があればどんどん追加していきましょう。
+</ScrapEntry>
+
+<ScrapEntry datetime="2024-05-26T12:00:00">
+画像ブロックも使えます:
+
+<ImageBlock
+  src="./img/hoge.png"
+  alt="サンプル画像"
+  caption="スクラップ内でも画像を拡大表示できます"
+/>
+
+<ImageBlock
+  src="./img/vertical.png"
+  alt="縦長サンプル画像"
+  caption="縦長画像は高さが制限され、中央に配置されます"
+/>
 </ScrapEntry>
 
 <ScrapClosed />
