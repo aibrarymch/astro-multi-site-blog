@@ -46,7 +46,7 @@ const entryId = title
           )}
         </>
       ) : (
-        <time datetime={datetime}>
+        <time class="entry-datetime-only" datetime={datetime}>
           {formattedDate} {formattedTime}
         </time>
       )}
@@ -100,7 +100,7 @@ const entryId = title
 
 .entry-header time,
 .entry-header .entry-title {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--text-secondary);
   font-weight: 500;
 }
@@ -110,13 +110,29 @@ const entryId = title
   color: var(--text-primary);
 }
 
+.entry-header .entry-title::before,
+.entry-header .entry-datetime-only::before {
+  content: "# ";
+  color: var(--accent);
+  font-weight: 700;
+}
+
 .entry-content {
   margin-top: 12px;
   line-height: 1.8;
 }
 
+.entry-content :global(p) {
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+
+.entry-content :global(:is(h1, h2, h3, h4, h5, h6) + p) {
+  margin-top: 1.5em;
+}
+
 .entry-content :global(p:first-child) {
-  margin-top: 0;
+  margin-top: 1.5em;
 }
 
 .entry-content :global(p:last-child) {

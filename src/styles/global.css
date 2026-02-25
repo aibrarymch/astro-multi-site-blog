@@ -442,6 +442,17 @@ article.post-content li {
   color: var(--text-primary);
 }
 
+article.post-content > p,
+article.post-content .scrap-thread > p {
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+
+article.post-content > :is(h1, h2, h3, h4, h5, h6) + p,
+article.post-content .scrap-thread > :is(h1, h2, h3, h4, h5, h6) + p {
+  margin-top: 1.5em;
+}
+
 article.post-content .table-wrapper {
   max-width: 100%;
   overflow-x: auto;
