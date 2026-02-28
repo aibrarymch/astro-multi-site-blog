@@ -90,7 +90,7 @@ export async function getAllPosts(): Promise<(CollectionEntry<'blog'> | Collecti
 export async function getSortedFilteredPosts(): Promise<CollectionEntry<'blog'>[]> {
   const posts = await getFilteredPosts();
   return posts.sort(
-    (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime()
+    (a, b) => (b.data.updatedAt ?? b.data.publishedAt).getTime() - (a.data.updatedAt ?? a.data.publishedAt).getTime()
   );
 }
 
@@ -203,7 +203,7 @@ export async function getFilteredScraps(): Promise<(CollectionEntry<'scraps'> | 
 export async function getSortedFilteredScraps(): Promise<CollectionEntry<'scraps'>[]> {
   const scraps = await getFilteredScraps();
   return scraps.sort(
-    (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime()
+    (a, b) => (b.data.updatedAt ?? b.data.publishedAt).getTime() - (a.data.updatedAt ?? a.data.publishedAt).getTime()
   );
 }
 
@@ -250,8 +250,8 @@ export async function getSortedFilteredUnifiedPosts(): Promise<UnifiedPost[]> {
   ];
 
   return unified.sort((a, b) => {
-    const dateA = a.entry.data.publishedAt.getTime();
-    const dateB = b.entry.data.publishedAt.getTime();
+    const dateA = (a.entry.data.updatedAt ?? a.entry.data.publishedAt).getTime();
+    const dateB = (b.entry.data.updatedAt ?? b.entry.data.publishedAt).getTime();
     return dateB - dateA;
   });
 }

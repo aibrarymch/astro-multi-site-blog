@@ -32,7 +32,7 @@ export const getStaticPaths = (async () => {
 
   return Object.entries(typeEntries).flatMap(([typeName, entries]) => {
     const sortedEntries = entries.sort(
-      (a, b) => b.entry.data.publishedAt.getTime() - a.entry.data.publishedAt.getTime()
+      (a, b) => (b.entry.data.updatedAt ?? b.entry.data.publishedAt).getTime() - (a.entry.data.updatedAt ?? a.entry.data.publishedAt).getTime()
     );
     const totalPages = Math.ceil(sortedEntries.length / POSTS_PER_PAGE);
     const pages = totalPages === 0 ? 1 : totalPages;

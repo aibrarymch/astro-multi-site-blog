@@ -39,7 +39,7 @@ export const getStaticPaths = (async () => {
 
   return Array.from(map.entries()).flatMap(([tagName, entries]) => {
     const sortedEntries = entries.sort(
-      (a, b) => b.entry.data.publishedAt.getTime() - a.entry.data.publishedAt.getTime()
+      (a, b) => (b.entry.data.updatedAt ?? b.entry.data.publishedAt).getTime() - (a.entry.data.updatedAt ?? a.entry.data.publishedAt).getTime()
     );
     const tagSlug = slugify(tagName);
     const totalPages = Math.ceil(sortedEntries.length / POSTS_PER_PAGE);
