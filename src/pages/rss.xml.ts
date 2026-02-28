@@ -13,6 +13,9 @@ export async function GET(context: APIContext) {
     description: post.data.excerpt,
     link: `/posts/${post.slug}/`,
     author: AUTHOR_PROFILE.name,
+    customData: post.data.updatedAt
+      ? `<atom:updated>${post.data.updatedAt.toISOString()}</atom:updated>`
+      : undefined,
   }));
 
   const scrapItems = scraps.map((scrap) => ({
@@ -21,6 +24,9 @@ export async function GET(context: APIContext) {
     description: scrap.data.excerpt,
     link: `/scraps/${scrap.slug}/`,
     author: AUTHOR_PROFILE.name,
+    customData: scrap.data.updatedAt
+      ? `<atom:updated>${scrap.data.updatedAt.toISOString()}</atom:updated>`
+      : undefined,
   }));
 
   const allEntries = [
@@ -35,6 +41,7 @@ export async function GET(context: APIContext) {
     description: SITE_DESCRIPTION,
     site: context.site!,
     items,
+    xmlns: { atom: 'http://www.w3.org/2005/Atom' },
     customData: `<language>ja</language>`,
   });
 }
